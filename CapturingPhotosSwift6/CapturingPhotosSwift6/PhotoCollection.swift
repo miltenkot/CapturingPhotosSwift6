@@ -171,6 +171,7 @@ class PhotoCollection: NSObject, ObservableObject {
         }
     }
     
+    @MainActor
     private func refreshPhotoAssets(_ fetchResult: PHFetchResult<PHAsset>? = nil) async {
 
         var newFetchResult = fetchResult
@@ -241,3 +242,5 @@ extension PhotoCollection: PHPhotoLibraryChangeObserver {
 }
 
 fileprivate let logger = Logger(subsystem: "com.apple.swiftplaygroundscontent.capturingphotos", category: "PhotoCollection")
+
+extension PhotoCollection: @unchecked Sendable {}

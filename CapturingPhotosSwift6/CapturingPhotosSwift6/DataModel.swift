@@ -140,3 +140,4 @@ fileprivate extension Image.Orientation {
 }
 
 fileprivate let logger = Logger(subsystem: "com.apple.swiftplaygroundscontent.capturingphotos", category: "DataModel")
+extension DataModel: @unchecked Sendable {}

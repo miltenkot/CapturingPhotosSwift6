@@ -27,8 +27,8 @@ struct PhotoItemView: View {
         }
         .task {
             guard image == nil, let cache = cache else { return }
-            imageRequestID = await cache.requestImage(for: asset, targetSize: imageSize) { result in
-                Task {
+            imageRequestID = await cache.requestImage(for: asset, targetSize: imageSize) { @Sendable result in
+                Task { @MainActor in
                     if let result = result {
                         self.image = result.image
                     }

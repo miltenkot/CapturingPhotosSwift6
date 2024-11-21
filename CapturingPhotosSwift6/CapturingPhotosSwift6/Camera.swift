@@ -2,7 +2,7 @@
 See the License.txt file for this sample’s licensing information.
 */
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import CoreImage
 import UIKit
 import os.log
@@ -107,8 +107,9 @@ class Camera: NSObject {
         sessionQueue = DispatchQueue(label: "session queue")
         
         captureDevice = availableCaptureDevices.first ?? AVCaptureDevice.default(for: .video)
-        
-        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+        Task { @MainActor in
+            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+        }
         NotificationCenter.default.addObserver(self, selector: #selector(updateForDeviceOrientation), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     
@@ -273,6 +274,7 @@ class Camera: NSObject {
         }
     }
 
+    @MainActor
     private var deviceOrientation: UIDeviceOrientation {
         var orientation = UIDevice.current.orientation
         if orientation == UIDeviceOrientation.unknown {
@@ -315,10 +317,12 @@ class Camera: NSObject {
             }
             photoSettings.photoQualityPrioritization = .balanced
             
-            if let photoOutputVideoConnection = photoOutput.connection(with: .video) {
-                if photoOutputVideoConnection.isVideoOrientationSupported,
-                    let videoOrientation = self.videoOrientationFor(self.deviceOrientation) {
-                    photoOutputVideoConnection.videoOrientation = videoOrientation
+            Task { @MainActor in
+                if let photoOutputVideoConnection = photoOutput.connection(with: .video) {
+                    if photoOutputVideoConnection.isVideoOrientationSupported,
+                       let videoOrientation = self.videoOrientationFor(self.deviceOrientation) {
+                        photoOutputVideoConnection.videoOrientation = videoOrientation
+                    }
                 }
             }
             
@@ -340,8 +344,9 @@ extension Camera: AVCapturePhotoCaptureDelegate {
     }
 }
 
-extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
+extension Camera: @preconcurrency AVCaptureVideoDataOutputSampleBufferDelegate {
     
+    @MainActor
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
         
@@ -374,3 +379,5 @@ fileprivate extension UIScreen {
 
 fileprivate let logger = Logger(subsystem: "com.apple.swiftplaygroundscontent.capturingphotos", category: "Camera")
 
+extension Camera: @unchecked Sendable {}
+extension CIImage: @retroactive @unchecked Sendable {}
