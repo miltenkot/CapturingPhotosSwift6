@@ -344,14 +344,16 @@ extension Camera: AVCapturePhotoCaptureDelegate {
     }
 }
 
-extension Camera: @preconcurrency AVCaptureVideoDataOutputSampleBufferDelegate {
-    
-    @MainActor
+extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
+
+        dispatchPrecondition(condition: .notOnQueue(.main))
         
-        if connection.isVideoOrientationSupported,
-           let videoOrientation = videoOrientationFor(deviceOrientation) {
+        if
+            connection.isVideoOrientationSupported,
+            let videoOrientation = videoOrientationFor(DispatchQueue.main.sync { deviceOrientation })
+        {
             connection.videoOrientation = videoOrientation
         }
 
