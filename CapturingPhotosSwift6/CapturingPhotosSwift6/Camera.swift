@@ -290,10 +290,10 @@ class Camera: NSObject {
     
     private func videoOrientationFor(_ deviceOrientation: UIDeviceOrientation) -> AVCaptureVideoOrientation? {
         switch deviceOrientation {
-        case .portrait: return AVCaptureVideoOrientation.portrait
-        case .portraitUpsideDown: return AVCaptureVideoOrientation.portraitUpsideDown
-        case .landscapeLeft: return AVCaptureVideoOrientation.landscapeRight
-        case .landscapeRight: return AVCaptureVideoOrientation.landscapeLeft
+        case .portrait: return .portrait
+        case .portraitUpsideDown: return .portraitUpsideDown
+        case .landscapeLeft: return .landscapeRight
+        case .landscapeRight: return .landscapeLeft
         default: return nil
         }
     }
@@ -344,15 +344,19 @@ extension Camera: AVCapturePhotoCaptureDelegate {
     }
 }
 
-extension Camera: @preconcurrency AVCaptureVideoDataOutputSampleBufferDelegate {
+extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     
-    @MainActor
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
         
-        if connection.isVideoOrientationSupported,
-           let videoOrientation = videoOrientationFor(deviceOrientation) {
-            connection.videoOrientation = videoOrientation
+        guard let device = captureDevice else { return }
+        let rotationCoordiantor = AVCaptureDevice.RotationCoordinator(
+            device: device,
+            previewLayer: nil
+        )
+        
+        if connection.isVideoOrientationSupported {
+            connection.videoRotationAngle = rotationCoordiantor.videoRotationAngleForHorizonLevelCapture
         }
 
         addToPreviewStream?(CIImage(cvPixelBuffer: pixelBuffer))
