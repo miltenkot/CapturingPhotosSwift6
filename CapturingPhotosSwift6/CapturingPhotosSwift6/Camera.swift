@@ -344,16 +344,14 @@ extension Camera: AVCapturePhotoCaptureDelegate {
     }
 }
 
-extension Camera: @preconcurrency AVCaptureVideoDataOutputSampleBufferDelegate {
-    
-    @MainActor
+extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = sampleBuffer.imageBuffer else { return }
         
-        if connection.isVideoOrientationSupported,
-           let videoOrientation = videoOrientationFor(deviceOrientation) {
-            connection.videoOrientation = videoOrientation
-        }
+        // if connection.isVideoOrientationSupported,
+        //    let videoOrientation = videoOrientationFor(deviceOrientation) {
+        //     connection.videoOrientation = videoOrientation
+        // }
 
         addToPreviewStream?(CIImage(cvPixelBuffer: pixelBuffer))
     }
